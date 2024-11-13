@@ -1,5 +1,6 @@
 import csv
 import time
+import datetime 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -10,6 +11,14 @@ from selenium.webdriver.support import expected_conditions as EC
 driver_path = r'D:\chromedriver-win64\chromedriver.exe'  # ChromeDriver가 있는 실제 경로로 변경하세요.
 service = Service(driver_path)
 driver = webdriver.Chrome(service=service)
+
+# datetime에 맞는 csv 파일 불러오기 
+# 날짜와 오전/오후 구분으로 CSV 파일 이름 설정
+today = datetime.datetime.now()
+date_str = today.strftime("%m%d")
+file_suffix = "1" if today.hour < 12 else "2"  # 오전은 1, 오후는 2
+csv_filename = f"headline_{date_str}_{file_suffix}.csv"
+
 
 # CSV 파일에서 뉴스 링크를 읽어들이기
 with open('naver_news_ranking.csv', 'r', encoding='utf-8') as file:
