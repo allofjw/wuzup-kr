@@ -2,6 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import datetime
+import os
+from dotenv import load_dotenv
+import boto3
 
 # CSV 파일 이름 생성절차 
 # 1. 오늘의 날짜 가져오기
@@ -15,8 +18,15 @@ if today.hour < 12:
 else:
     file_suffix = "2"  # 후반기
 
-# 3. CSV 파일 이름 생성
-csv_filename = f"headline_{date_str}_{file_suffix}.csv"
+
+# 3. ../data 디렉토리 경로 생성
+base_dir = "../headline_data"
+date_dir = os.path.join(base_dir, date_str) # ../headline_data/1117
+csv_filename = os.path.join(date_dir, f"headline_{date_str}_{file_suffix}.csv")
+
+os.makedirs(date_dir, exist_ok=True)  # ../headline_data 디렉토리가 없으면 생성
+
+
 
 
 # 네이버 랭킹 뉴스 URL
@@ -48,3 +58,31 @@ with open(csv_filename, 'w', newline='', encoding='utf-8') as file:
 
         writer.writerow([i, title, link])
 print(f"{csv_filename} 파일이 생성되었습니다.")
+
+# .env 파일 로드
+load_dotenv()
+# 환경 변수에서 AWS 설정 불러오기
+AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
+AWS_SECRET_KEY = os.getenv('AWS_SECRET_KEY')
+AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+AWS_REGION = os.getenv('AWS_REGION')
+
+
+# S3에 파일 업로드
+def upload_to_s3(file_path, bucket_name, s3_key):
+    """S3 버킷에 파일 업로드"""
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_SECRET_KEY,
+        region_name=AWS_REGION
+    )
+    try:
+        s3.upload_file(file_path, bucket_name, s3_key)
+        print(f"{file_path} 파일이 S3에 업로드되었습니다: s3://{bucket_name}/{s3_key}")
+    except Exception as e:
+        print(f"S3 업로드 중 오류 발생: {e}")
+
+# S3 경로 지정 및 업로드 실행
+s3_key = f"{date_str}/headline_{date_str}_{file_suffix}.csv"
+upload_to_s3(csv_filename, AWS_BUCKET_NAME, s3_key)
