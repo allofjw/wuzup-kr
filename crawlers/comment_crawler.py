@@ -9,10 +9,11 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 from dotenv import load_dotenv
 import boto3
-
 # Chrome WebDriver 경로 설정
 #driver_path = '/usr/local/bin/chromedriver-linux64/chromedriver'  # ChromeDriver가 있는 실제 경로로 변경하세요.
-driver_path = 'c:/Users/JW/Desktop/chromedriver-win64/chromedriver.exe'  # ChromeDriver가 있는 실제 경로로 변경하세요.
+
+# Chrome WebDriver 경로 설정
+driver_path = 'c:/Users/JW/Desktop/chromedriver-win64/chromedriver.exe'  # ChromeDriver 경로
 service = Service(driver_path)
 options = webdriver.ChromeOptions()
 options.add_argument('--headless')  # UI 없이 실행
@@ -45,7 +46,6 @@ with open(head_json_filename, 'r', encoding='utf-8') as infile:
     headlines = json.load(infile)  # JSON 데이터 읽기
 
     for item in headlines:
-        # 뉴스 정보 가져오기
         number = item['number']  # 뉴스 번호
         news_url = item['link']  # 뉴스 URL
         driver.get(news_url)
@@ -63,69 +63,60 @@ with open(head_json_filename, 'r', encoding='utf-8') as infile:
         try:
             initial_more_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'u_cbox_btn_view_comment')))
             initial_more_button.click()
-            time.sleep(1)  # 댓글이 로드될 시간 대기
+            time.sleep(1)
             print("첫 번째 '댓글 더보기' 버튼 클릭 성공.")
         except Exception as e:
             print("첫 번째 '댓글 더보기' 버튼을 찾을 수 없습니다:", e)
             continue
 
-        # 댓글 로드
+        # "더보기" 버튼 반복 클릭 200회까지
         comments_data = []
-        prev_comment_count = 0
-        total_comments = 0
-        while total_comments < 200:
-            try:
+        total_comments = 0  # 총 댓글 수
+        try:
+            while total_comments < 200:
+                more_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'u_cbox_btn_more')))
+                more_button.click()
+                time.sleep(1)
+                print("댓글 '더보기' 버튼 클릭 성공.")
+                # 댓글 수 업데이트
                 comments = driver.find_elements(By.CLASS_NAME, 'u_cbox_comment')
-                current_comment_count = len(comments)
+                total_comments = len(comments)
+                print(f"현재까지 수집된 댓글 수: {total_comments}")
+                 # 댓글이 200개 이상이면 루프 종료
+                if total_comments >= 200:
+                    print("댓글이 200개를 초과하여 수집을 종료합니다.")
+                    break
+        except Exception as e:
+            print("더 이상 클릭할 '더보기' 버튼이 없습니다:", e)
+
+        try:
+            comments = driver.find_elements(By.CLASS_NAME, 'u_cbox_comment')
+            for element in comments[:200]:
+                # 원래의 try-except 구조 그대로 유지
+                try:
+                    content = element.find_element(By.CLASS_NAME, 'u_cbox_text_wrap').text
+                except Exception:
+                    content = "댓글 내용을 가져올 수 없습니다."
 
                 try:
-                    more_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'u_cbox_btn_more')))
-                    more_button.click()
-                    time.sleep(1)
-                except:
-                    print(f"'더보기' 버튼이 없습니다. 번호: {number}")
-                    break
+                    upvotes = element.find_element(By.CLASS_NAME, 'u_cbox_cnt_recomm').text
+                    upvotes = int(upvotes) if upvotes.isdigit() else 0
+                except Exception:
+                    upvotes = 0
 
-                # 댓글 개수가 동일하면 종료
-                if current_comment_count == prev_comment_count:
-                    print("더 이상 로드할 댓글이 없습니다.")
-                    break
-                prev_comment_count = current_comment_count
+                try:
+                    downvotes = element.find_element(By.CLASS_NAME, 'u_cbox_cnt_unrecomm').text
+                    downvotes = int(downvotes) if downvotes.isdigit() else 0
+                except Exception:
+                    downvotes = 0
 
-                # 댓글 수집
-                for element in comments:
-                    try:
-                        try:
-                            content = element.find_element(By.CLASS_NAME, 'u_cbox_text_wrap').text
-                        except Exception as e:
-                            content = "댓글 내용을 가져올 수 없습니다."  # 기본값 설정
-                            print(f"댓글 내용을 가져오지 못했습니다: {e}")
-
-                        try:
-                            upvotes = element.find_element(By.CLASS_NAME, 'u_cbox_cnt_recomm').text
-                            upvotes = int(upvotes) if upvotes.isdigit() else 0
-                        except Exception:
-                            upvotes = 0  # 추천수가 없을 경우 기본값 설정
-
-                        try:
-                            downvotes = element.find_element(By.CLASS_NAME, 'u_cbox_cnt_unrecomm').text
-                            downvotes = int(downvotes) if downvotes.isdigit() else 0
-                        except Exception:
-                            downvotes = 0  # 비추천수가 없을 경우 기본값 설정
-                        # 댓글 데이터 추가
-                        comments_data.append({
-                            "content": content,
-                            "upvotes": upvotes,
-                            "downvotes": downvotes
-                            })
-                    except Exception as e:
-                        print(f"댓글 수집 중 오류 발생: {e}")
-
-                total_comments = len(comments_data)
-
-            except Exception as e:
-                print(f"댓글 로드 중 오류 발생: {e}")
-                break
+                comments_data.append({
+                    "content": content,
+                    "upvotes": upvotes,
+                    "downvotes": downvotes
+                })
+        except Exception as e:
+            print(f"댓글 로드 중 오류 발생: {e}")
 
         # 뉴스 댓글 데이터 저장
         all_comments.append({
@@ -134,12 +125,10 @@ with open(head_json_filename, 'r', encoding='utf-8') as infile:
             "comments": comments_data
         })
 
-        # 뉴스별 수집 완료 메시지
-        print(f"뉴스 번호 {number}의 댓글 수집이 완료되었습니다.")
-
-# JSON 파일로 저장
-with open(comments_json_filename, 'w', encoding='utf-8') as json_file:
-    json.dump(all_comments, json_file, ensure_ascii=False, indent=4)
+        # 중간 저장 추가 (구조는 그대로 유지)
+        with open(comments_json_filename, 'w', encoding='utf-8') as json_file:
+            json.dump(all_comments, json_file, ensure_ascii=False, indent=4)
+        print(f"Intermediate save: {comments_json_filename}")
 
 print(f"모든 댓글 데이터가 JSON 파일로 저장되었습니다: {comments_json_filename}")
 
@@ -170,4 +159,3 @@ def upload_to_s3(file_path, bucket_name, s3_key):
 # S3 경로 지정 및 업로드 실행
 s3_key = f"comments_data/{date_str}/comments_{date_str}_{file_suffix}.json"
 upload_to_s3(comments_json_filename, AWS_BUCKET_NAME, s3_key)
-
