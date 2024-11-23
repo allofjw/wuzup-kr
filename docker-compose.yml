@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  spring-app:
+    build: .
+    container_name: spring-app
+    ports:
+      - "8080:8080" # 로컬 포트 8080을 컨테이너의 8080에 연결
+    image : chungisaac/wuzu_de_project:latest
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://database-1.czu06i00m58j.ap-northeast-2.rds.amazonaws.com:3306/wuzu
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: sharon11
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+    depends_on:
+      - mysql  # MySQL이 로컬 컨테이너일 경우 사용, 하지만 AWS RDS를 사용하므로 없어도 무방
+
+  # Optional: MySQL 컨테이너 (RDS가 아닌 로컬에서 실행하려면 사용)
+  mysql:
+    image: mysql:8.0
+    container_name: local-mysql
+    ports:
+      - "3306:3306" # 로컬 포트 3306을 컨테이너의 3306에 연결
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wuzu
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: sharon11
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
