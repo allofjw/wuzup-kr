@@ -10,10 +10,10 @@ import os
 from dotenv import load_dotenv
 import boto3
 # Chrome WebDriver 경로 설정
-#driver_path = '/usr/local/bin/chromedriver-linux64/chromedriver'  # ChromeDriver가 있는 실제 경로로 변경하세요.
+driver_path = '/usr/local/bin/chromedriver-linux64/chromedriver'  # linux
 
 # Chrome WebDriver 경로 설정
-driver_path = 'c:/Users/JW/Desktop/chromedriver-win64/chromedriver.exe'  # ChromeDriver 경로
+#driver_path = 'c:/Users/JW/Desktop/chromedriver-win64/chromedriver.exe'  # ChromeDriver 경로
 service = Service(driver_path)
 options = webdriver.ChromeOptions()
 options.add_argument('--headless')  # UI 없이 실행
@@ -26,7 +26,7 @@ today = datetime.datetime.now()
 date_str = today.strftime("%m%d")
 file_suffix = "1" if today.hour < 12 else "2"  # 오전은 1, 오후는 2
 
-comments_base_dir = "../comment_data"
+comments_base_dir = "../data/comment_data"
 comments_date_dir = os.path.join(comments_base_dir, date_str)
 os.makedirs(comments_date_dir, exist_ok=True)  # ../comments_data/date 디렉토리가 없으면 생성
 

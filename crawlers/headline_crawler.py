@@ -19,7 +19,7 @@ else:
     file_suffix = "2"  # 후반기
 
 # 3. ../data 디렉토리 경로 생성
-base_dir = "../headline_data"
+base_dir = "../data/headline_data"
 date_dir = os.path.join(base_dir, date_str)  # ../headline_data/1117
 json_filename = os.path.join(date_dir, f"headline_{date_str}_{file_suffix}.json")
 

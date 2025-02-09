@@ -13,6 +13,11 @@ logging.basicConfig(
 
 # headline_crawler.py 실행 함수
 def run_headline_crawler():
+    """
+    Run the headline_crawler.py script.
+    Linux환경에 맞게 수정된 코드
+
+    """
     try:
         print("Running: crawlers/headline_crawler.py")
         logging.info("Running: crawlers/headline_crawler.py")
@@ -25,6 +30,11 @@ def run_headline_crawler():
 
 # comment_crawler.py 실행 함수
 def run_comment_crawler():
+    """
+    Run the comment_crawler.py script.
+    Linux환경에 맞게 수정된 코드
+    
+    """
     try:
         print("Running: crawlers/comment_crawler.py")
         logging.info("Running: crawlers/comment_crawler.py")
@@ -37,6 +47,13 @@ def run_comment_crawler():
 
 # headline_crawler와 comment_crawler를 순서대로 실행
 def run_all_crawlers():
+    """
+    Run the headline_crawler.py and comment_crawler.py scripts in sequence.
+    헤드라인 크롤링결과가 AWS S3에 업로드가 되면, AWS Lambda Trigger에 의해 
+    헤드라인 데이터 군집화 모델(약 1분간의 인프런스 과정 소모)이 작동하고,
+    군집화된 헤드라인 데이터들에 대하여 댓글 크롤러 작동
+
+    """
     logging.info("Starting the crawlers...")
     print("Starting the crawlers...")
     run_headline_crawler()
@@ -45,18 +62,15 @@ def run_all_crawlers():
     print("Crawlers finished successfully.")
     logging.info("Crawlers finished successfully.")
 
-# 상태 기록 함수
-def log_heartbeat():
-    message = f"Heartbeat: Process is running. Current time: {datetime.now()}"
-    print(message)
-    logging.info(message)
-
 # 스케줄러 설정
 def setup_scheduler():
+    """
+    오전, 오후로 스케줄러 설정을 통해
+    뉴스 헤드라인, 댓글 크롤러를 실행하는 함수
+    """
     # 작업 스케줄 설정
     schedule.every().day.at("10:00").do(run_all_crawlers)
     schedule.every().day.at("18:30").do(run_all_crawlers)
-    schedule.every(10).minutes.do(log_heartbeat)  # 10분마다 상태 기록
     print("Scheduler initialized. Tasks will run at the scheduled times (10:00 and 18:30).")
 
     while True:
