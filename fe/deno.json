@@ -1,0 +1,38 @@
+{
+  "tasks": {
+    "dev": "deno run -A --node-modules-dir npm:vite",
+    "build": "deno run -A --node-modules-dir npm:vite build",
+    "preview": "deno run -A --node-modules-dir npm:vite preview",
+    "serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/"
+  },
+  "compilerOptions": {
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "jsxImportSourceTypes": "@types/react"
+  },
+  "imports": {
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.0",
+    "@types/react": "npm:@types/react@^18.3.11",
+    "@types/react-dom": "npm:@types/react-dom@^18.3.1",
+    "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^4.3.3",
+    "autoprefixer": "npm:autoprefixer@^10.4.20",
+    "postcss": "npm:postcss@^8.4.49",
+    "react": "npm:react@^18.3.1",
+    "react-dom": "npm:react-dom@^18.3.1",
+    "tailwindcss": "npm:tailwindcss@^3.4.15",
+    "vite": "npm:vite@^5.4.9"
+  },
+  "deploy": {
+    "project": "587c6dbe-cf7e-4bef-a4c1-8e3054ee9b2f",
+    "exclude": [
+      "**/node_modules"
+    ],
+    "include": [],
+    "entrypoint": "jsr:@std/http@1.0.0-rc.5/file-server"
+  }
+}
